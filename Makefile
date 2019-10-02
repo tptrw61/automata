@@ -15,7 +15,7 @@ OBJS = $(patsubst src/%.cpp,bin/%.o,$(wildcard src/*.cpp))
 AD = AutomataDefs
 FA = FiniteAutomata
 
-all: $(LIB_FILE)
+all: $(LIB_FILE) tests
 
 $(LIB_FILE): $(OBJS)
 	ar rcs $@ $^

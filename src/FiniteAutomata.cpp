@@ -1,27 +1,40 @@
 #include "FiniteAutomata.h"
+#include <vector>
+#include <queue>
 
 
-
-
-int FiniteAutomata::transition(Symbol symbol)
+void FiniteAutomata::transition(Symbol symbol)
 {
-	StateVec sv = currentState;
-	svClear(currentState);
+	StateSet sset = currentState;
+	currentState.clear();
 	TransitionInput ti(0, symbol);
-	TransitionMap::iterator tr;
-	EpsilonTMap::iterator etr;
 
-	for (int i = 0; i < stateCount; i++) {
-		if (sv[i] == 0)
-			continue;
-		tr = transitionMap.find(ti.setState(i));
-		if (tr != transitionMap.end())
-			svOr(currentState, tr->second);
-		etr = epsilonMap.find(i);
-		if (etr != epsilonMap.end())
-			svOr(currentState, etr->second);
+	for (State state : sset) {
+		addStateSet(currentState, transitionMap[ti.setState(state)]);
 	}
-	return 0;
+	epsilonTransition();
+}
+void FiniteAutomata::epsilonTransition()
+{
+	std::queue<State> epq;
+	std::vector<bool> check(stateCount);
+	for (State state : currentState) {
+		epq.push(state);
+	}
+	State state;
+	while (!epq.empty()) {
+		state = epq.front();
+		epq.pop();
+		if (check[state])
+			continue;
+		check[state] = true;
+		addStateSet(currentState, epsilonMap[state]);
+		for (State st : epsilonMap[state]) {
+			if (check[st])
+				continue;
+			epq.push(st);
+		}
+	}
 }
 
 FiniteAutomata::FiniteAutomata() : FiniteAutomata(1)
@@ -33,8 +46,6 @@ FiniteAutomata::FiniteAutomata(int stateCount)
 	if (stateCount <= 0)
 		stateCount = 1;
 	this->stateCount = stateCount;
-	currentState.resize(stateCount);
-	acceptStates.resize(stateCount);
 	alphabet.insert(EPSILON);
 }
 
@@ -53,15 +64,13 @@ FiniteAutomata::~FiniteAutomata()
 bool FiniteAutomata::test(const std::string& s)
 {
 	EpsilonTMap::iterator etr = epsilonMap.find(startState);
-	svClear(currentState);
-	currentState[startState] = 1;
-	if (etr != epsilonMap.end())
-		svOr(currentState, etr->second);
+	currentState.clear();
+	currentState.insert(startState);
+	epsilonTransition();
 	for (int i = 0; i < s.size(); i++)
 		transition(s[i]);
-	svAnd(currentState, acceptStates);
-	for (int i = 0; i < currentState.size(); i++)
-		if (currentState[i])
+	for (State state : currentState)
+		if (acceptStates.count(state) > 0)
 			return true;
 	return false;
 }
@@ -72,16 +81,12 @@ bool FiniteAutomata::addRule(State startState, Symbol symbol, State endState)
 		return false;
 	if (alphabet.count(symbol) == 0)
 		alphabet.insert(symbol);
-	StateVec sv(stateCount);
-	sv[endState] = 1;
 	if (symbol == EPSILON) {
-		svOr(sv, epsilonMap[startState]);
-		epsilonMap[startState] = sv;
+		epsilonMap[startState].insert(endState);
 	}
 	else {
 		TransitionInput ti(startState, symbol);
-		svOr(sv, transitionMap[ti]);
-		transitionMap[ti] = sv;
+		transitionMap[ti].insert(endState);
 	}
 	return true;
 }
@@ -110,16 +115,16 @@ bool FiniteAutomata::setStartState(const std::string& state)
 	return setStartState(getState(state));
 }
 
-bool FiniteAutomata::setAcceptState(State state, bool accept)
+bool FiniteAutomata::setAcceptState(State state)
 {
 	if (state < 0 || state >= stateCount)
 		return false;
-	acceptStates[state] = accept;
+	acceptStates.insert(state);
 	return true;
 }
-bool FiniteAutomata::setAcceptState(const std::string& state, bool accept)
+bool FiniteAutomata::setAcceptState(const std::string& state)
 {
-	return setAcceptState(getState(state), accept);
+	return setAcceptState(getState(state));
 }
 
 bool FiniteAutomata::setStateCount(int stateCount)
@@ -131,8 +136,8 @@ bool FiniteAutomata::setStateCount(int stateCount)
 
 int FiniteAutomata::addState(bool acceptState)
 {
-	currentState.push_back(0);
-	acceptStates.push_back(acceptState);
+	currentState.insert(0);
+	acceptStates.insert(acceptState);
 	return stateCount++;
 }
 
@@ -145,7 +150,7 @@ int FiniteAutomata::addState(const std::string& label, bool acceptState)
 
 bool FiniteAutomata::labelState(State state, const std::string& label)
 {
-	if (state < 0 || state >= stateCount || label.size())
+	if (state < 0 || state >= stateCount || label.empty())
 		return false;
 	stateLabels[label] = state;
 	return true;

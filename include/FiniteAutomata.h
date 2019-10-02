@@ -1,6 +1,5 @@
 #pragma once
 #include <string>
-#include <vector>
 #include <map>
 #include <set>
 #include <initializer_list>
@@ -25,13 +24,13 @@ private:
 		bool operator<=(const TransitionInput &rhs) const { return !(*this > rhs); }
 	};
 	
-	using TransitionMap = std::map<TransitionInput, StateVec>;
-	using EpsilonTMap = std::map<State, StateVec>;
+	using TransitionMap = std::map<TransitionInput, StateSet>;
+	using EpsilonTMap = std::map<State, StateSet>;
 
 	int stateCount;
 	int startState;
-	StateVec acceptStates;
-	StateVec currentState;
+	StateSet acceptStates;
+	StateSet currentState;
 	std::set<Symbol> alphabet;
 
 	TransitionMap transitionMap;
@@ -39,8 +38,8 @@ private:
 
 	std::map<std::string, int> stateLabels;
 
-	int transition(Symbol symbol);
-
+	void transition(Symbol symbol);
+	void epsilonTransition();
 	
 public:
 
@@ -57,8 +56,8 @@ public:
 	bool addRule(const std::string& startState, Symbol symbol, const std::string& endState);
 	bool setStartState(State state);
 	bool setStartState(const std::string& state);
-	bool setAcceptState(State state, bool accept = 1);
-	bool setAcceptState(const std::string& state, bool accept = 1);
+	bool setAcceptState(State state);
+	bool setAcceptState(const std::string& state);
 
 	bool setStateCount(int stateCount);
 	int addState(bool acceptState = 0);

@@ -9,6 +9,7 @@
 class FiniteAutomata : public Automata
 {
 public:
+	using State = int;
 private:
 	struct TransitionInput {
 		State state;
@@ -24,6 +25,7 @@ private:
 		bool operator<=(const TransitionInput &rhs) const { return !(*this > rhs); }
 	};
 	
+	using StateSet = std::set<State>;
 	using TransitionMap = std::map<TransitionInput, StateSet>;
 	using EpsilonTMap = std::map<State, StateSet>;
 
@@ -37,6 +39,8 @@ private:
 	EpsilonTMap epsilonMap;
 
 	std::map<std::string, int> stateLabels;
+
+	void addStateSet(StateSet& dest, const StateSet& rhs);
 
 	void transition(Symbol symbol);
 	void epsilonTransition();

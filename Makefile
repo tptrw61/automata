@@ -26,10 +26,10 @@ $(FA_LIB): bin/$(FA).o bin/$(AD).o
 bin/%.o: bin
 
 bin/$(AD).o: src/$(AD).cpp include/$(AD).h
-	g++ -c $(INCLUDE) -o $@ $<
+	g++ -c -Wall $(INCLUDE) -o $@ $<
 
 bin/$(FA).o: src/$(FA).cpp include/$(FA).h
-	g++ -c $(INCLUDE) -o $@ $<
+	g++ -c -Wall $(INCLUDE) -o $@ $<
 
 bin:
 	mkdir bin
@@ -40,4 +40,4 @@ tests/%: tests/%.cpp $(LIB_FILE)
 	g++ $(INCLUDE) -o $@ $^
 
 clean: 
-	rm -f bin/* $(filter-out tests/%.cpp,$(wildcard tests/*))
+	rm -f bin/* *.a $(filter-out tests/%.cpp,$(wildcard tests/*))
